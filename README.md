@@ -1,4 +1,4 @@
-# CEO Executive Assistant AI
+# CEO AI Executive Assistant
 
 > A cross-platform (macOS / Windows), fully-local AI executive assistant for a busy CEO —
 > a build-prompt set that stands up a daily brief and multi-channel commitment capture

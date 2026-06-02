@@ -33,11 +33,11 @@ sandbox that can't see the Automation grants. This machine runs all the time, so
 
 ## Tasks
 
-### 1. Write the LaunchAgent plists into `~/ceo-executive-assistant-ai/schedule/`
+### 1. Write the LaunchAgent plists into `~/ceo-ai-executive-assistant/schedule/`
 
 Create one plist per job. Use reverse-DNS labels like `com.exec-assistant.extract-mail`. Each:
 - `ProgramArguments` → the script's wrapper (e.g. `bin/extract_mail.sh`). Use **absolute
-  paths** (launchd has a minimal env). Set `WorkingDirectory` to `~/ceo-executive-assistant-ai`.
+  paths** (launchd has a minimal env). Set `WorkingDirectory` to `~/ceo-ai-executive-assistant`.
 - Redirect `StandardOutPath` / `StandardErrorPath` into `logs/<job>.out` / `.err`.
 - Set a sane `EnvironmentVariables` `PATH` that includes Homebrew (`/opt/homebrew/bin`),
   `/usr/local/bin`, `/usr/bin`, `/bin` — so `wacli`, `icalBuddy`, `python3`, `sqlite3`,

@@ -40,10 +40,10 @@ ask me.
 ### 1. Create the project skeleton
 
 Create this layout (use `~` on macOS, `%USERPROFILE%` on Windows) at the project root
-`ceo-executive-assistant-ai/`:
+`ceo-ai-executive-assistant/`:
 
 ```
-ceo-executive-assistant-ai/
+ceo-ai-executive-assistant/
   bin/          # extractor + writer scripts (built by later prompts)
   state/        # JSON snapshots + dedup ledgers — PRIVATE
   logs/         # scheduler stdout/stderr

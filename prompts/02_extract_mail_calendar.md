@@ -1,7 +1,7 @@
 # PROMPT 02 — Mail + Calendar extractors (Tier 1)
 
 > Paste into a fresh Claude Code session on the CEO's Mac. Build #2. Assumes Prompt 01 is
-> done: `~/ceo-executive-assistant-ai/` exists, permissions granted, `reference/accounts.md` lists the
+> done: `~/ceo-ai-executive-assistant/` exists, permissions granted, `reference/accounts.md` lists the
 > real accounts/calendars.
 
 > **Platform note.** This prompt is written in the **macOS** idiom (AppleScript + `osascript`,
@@ -16,16 +16,16 @@
 
 Tier-1 extractors are **dumb, cheap, deterministic** scripts fired by launchd every ~5
 minutes. They do NO reasoning. They just dump raw, recent data to JSON in
-`~/ceo-executive-assistant-ai/state/` for the Tier-2 brain to read later. Keep them fast and robust —
+`~/ceo-ai-executive-assistant/state/` for the Tier-2 brain to read later. Keep them fast and robust —
 they run constantly and must never hang or pop a dialog.
 
-Read `~/ceo-executive-assistant-ai/reference/accounts.md` first so you iterate over the real account and
+Read `~/ceo-ai-executive-assistant/reference/accounts.md` first so you iterate over the real account and
 calendar names.
 
 ## Task A — `bin/extract_mail.applescript`
 
 Write an AppleScript (run via `osascript`) that dumps recent mail across **all** accounts
-to `~/ceo-executive-assistant-ai/state/mail.json`.
+to `~/ceo-ai-executive-assistant/state/mail.json`.
 
 Requirements:
 - Iterate `every account` → its `INBOX` mailbox → messages received in the **last 3 days**
@@ -51,7 +51,7 @@ Requirements:
 ## Task B — `bin/extract_calendar.applescript` (prefer icalBuddy)
 
 Dump events from **today through +7 days** across all calendars to
-`~/ceo-executive-assistant-ai/state/calendar.json`.
+`~/ceo-ai-executive-assistant/state/calendar.json`.
 
 Two paths — detect and choose at runtime:
 - **Preferred: `icalBuddy`.** If `which icalBuddy` succeeds (or offer `brew install
@@ -80,9 +80,9 @@ Output valid JSON (verify it). Atomic write as in Task A.
 ## Verify before finishing
 
 Run both extractors manually and show me:
-1. `python3 -m json.tool ~/ceo-executive-assistant-ai/state/mail.json | head -40` — valid JSON, real
+1. `python3 -m json.tool ~/ceo-ai-executive-assistant/state/mail.json | head -40` — valid JSON, real
    messages, sender/subject/date/account populated, content truncated.
-2. `python3 -m json.tool ~/ceo-executive-assistant-ai/state/calendar.json | head -40` — events spanning
+2. `python3 -m json.tool ~/ceo-ai-executive-assistant/state/calendar.json | head -40` — events spanning
    roughly −5 to +7 days, with past events present.
 3. Confirm which Calendar path was used (icalBuddy vs AppleScript) and which Mail accounts
    were skipped (if any).

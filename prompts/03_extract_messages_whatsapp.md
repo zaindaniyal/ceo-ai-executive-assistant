@@ -1,7 +1,7 @@
 # PROMPT 03 — iMessage + WhatsApp extractors (Tier 1)
 
 > Paste into a fresh Claude Code session on the CEO's Mac. Build #3. Assumes Prompts 01–02
-> done. Read `~/ceo-executive-assistant-ai/reference/wacli.md` first.
+> done. Read `~/ceo-ai-executive-assistant/reference/wacli.md` first.
 
 > **Platform note.** macOS idiom below. On **Windows**: **iMessage does not exist — SKIP
 > Task A entirely** and record the blind spot in `reference/platform.md`. Task B (`wacli`) is
@@ -11,7 +11,7 @@
 ## Context
 
 Same Tier-1 rules: dumb, cheap, deterministic, launchd-fired every ~5 min, output JSON to
-`~/ceo-executive-assistant-ai/state/`, atomic writes, no dialogs, no foreground apps. The brain reads
+`~/ceo-ai-executive-assistant/state/`, atomic writes, no dialogs, no foreground apps. The brain reads
 these later to find commitments.
 
 ## Task A — `bin/extract_messages.sh` (iMessage via chat.db)
@@ -20,7 +20,7 @@ these later to find commitments.
 send but cannot reliably read). Requires Full Disk Access (confirmed in Prompt 01).
 
 Write a shell script that queries `~/Library/Messages/chat.db` for messages from the **last
-3 days** and dumps `~/ceo-executive-assistant-ai/state/imessage.json`.
+3 days** and dumps `~/ceo-ai-executive-assistant/state/imessage.json`.
 
 Key facts about chat.db to get right:
 - `message.date` is **nanoseconds since 2001-01-01** (Apple epoch). Convert to ISO:
@@ -49,7 +49,7 @@ Use the **real** `wacli` interface documented in `reference/wacli.md`. If anythi
 unverified, re-run `wacli --help` / `wacli <sub> --help` now and confirm before coding.
 
 Goal: dump recent WhatsApp messages from the **last 3 days** across active chats to
-`~/ceo-executive-assistant-ai/state/whatsapp.json`.
+`~/ceo-ai-executive-assistant/state/whatsapp.json`.
 
 - List recent chats, then pull recent messages per chat (respect whatever count/time-window
   flags `wacli` actually exposes).
@@ -66,7 +66,7 @@ Goal: dump recent WhatsApp messages from the **last 3 days** across active chats
 ## Task C — unify the shape
 
 The brain wants one consistent record shape across iMessage + WhatsApp. Document the agreed
-schema in `~/ceo-executive-assistant-ai/reference/message_schema.md`, e.g.:
+schema in `~/ceo-ai-executive-assistant/reference/message_schema.md`, e.g.:
 
 ```json
 {
@@ -86,9 +86,9 @@ Both extractors should emit arrays of this shape (plus source-specific extras ar
 ## Verify before finishing
 
 Show me:
-1. `python3 -m json.tool ~/ceo-executive-assistant-ai/state/imessage.json | head -40` — real messages,
+1. `python3 -m json.tool ~/ceo-ai-executive-assistant/state/imessage.json | head -40` — real messages,
    correct dates (not 2001!), `from_me` populated, handles present.
-2. `python3 -m json.tool ~/ceo-executive-assistant-ai/state/whatsapp.json | head -40` — real messages,
+2. `python3 -m json.tool ~/ceo-ai-executive-assistant/state/whatsapp.json | head -40` — real messages,
    direction + counterpart populated.
 3. Confirm both conform to `message_schema.md`.
 

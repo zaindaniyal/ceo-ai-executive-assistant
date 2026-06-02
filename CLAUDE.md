@@ -1,4 +1,4 @@
-# CEO Executive Assistant AI — project instructions
+# CEO AI Executive Assistant — project instructions
 
 Local AI executive assistant for the CEO. Every session working in this project must
 follow this file. The full design lives in `reference/ARCHITECTURE.md` — read it before
@@ -79,7 +79,7 @@ Do not collapse these. Do not make an extractor call the LLM. Do not run the bra
 ## Layout
 
 ```
-~/ceo-executive-assistant-ai/
+~/ceo-ai-executive-assistant/
   bin/        extractor + writer scripts
   state/      JSON snapshots + processed.json ledger — PRIVATE, gitignored
   logs/       launchd stdout/stderr

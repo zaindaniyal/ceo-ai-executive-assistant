@@ -1,4 +1,4 @@
-# CEO Executive Assistant AI — Architecture Reference
+# CEO AI Executive Assistant — Architecture Reference
 
 > Read this once before pasting any prompt. It is the shared mental model that every
 > prompt in `../prompts/` assumes. The prompts each repeat a short version of this, but
@@ -6,7 +6,7 @@
 
 ## The problem
 
-The the CEO runs hot: ~4 calendars, ~4 email accounts, WhatsApp, iMessage, constant
+The CEO runs hot: ~4 calendars, ~4 email accounts, WhatsApp, iMessage, constant
 travel and back-to-back meetings. Things fall through the cracks — specifically **verbal
 and written commitments**:
 
@@ -100,7 +100,7 @@ note**. The session executes only the column matching the detected OS.
 ## Directory layout (created on the CEO's Mac)
 
 ```
-~/ceo-executive-assistant-ai/
+~/ceo-ai-executive-assistant/
   bin/                      # extractor + writer scripts
     extract_mail.applescript
     extract_calendar.applescript

@@ -16,7 +16,7 @@ actionable — creates Apple Reminders **and** appends them to today's Daily Bri
 the Tier-3 writers. It must be **cheap, idempotent, and conservative** (a missed task is
 recoverable; a flood of junk reminders gets the whole system turned off).
 
-Build this as a Claude Code **skill** at `~/ceo-executive-assistant-ai/.claude/skills/commitment-detector/`
+Build this as a Claude Code **skill** at `~/ceo-ai-executive-assistant/.claude/skills/commitment-detector/`
 with a `SKILL.md` and any helper scripts. Also create `bin/run_brain.sh` that invokes it
 headlessly (`claude -p` with the skill) for launchd to call.
 

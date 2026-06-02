@@ -11,7 +11,7 @@
 Each morning, the brain assembles a one-screen **Daily Brief** into Apple Notes so the CEO —
 who's usually mid-travel and back-to-back — gets his whole day in one place. Same Tier-2
 rules: cheap, reads the Tier-1 JSON snapshots, writes via the Tier-3 `upsert_note`
-helper. Build it as a skill at `~/ceo-executive-assistant-ai/.claude/skills/daily-brief/` plus a
+helper. Build it as a skill at `~/ceo-ai-executive-assistant/.claude/skills/daily-brief/` plus a
 `bin/run_brief.sh` launchd entrypoint.
 
 ## Inputs

@@ -58,6 +58,10 @@ This assistant runs on whichever machine the executive uses. The **architecture 
 identical** on both; only the *scripting stack* differs. **Detect the OS once** (Prompt 01,
 recorded in `reference/platform.md`) and then commit fully:
 
+On Windows, also read `reference/WINDOWS-NOTES.md` — prerequisites (classic Outlook vs the
+Graph fallback), reminder/note backend choices, and the Task Scheduler "run as logged-in
+user" trap.
+
 - **On macOS → every script is AppleScript / shell**, driven by `osascript`, scheduled by
   **launchd**.
 - **On Windows → every script is PowerShell (`.ps1`)**, scheduled by **Task Scheduler**.

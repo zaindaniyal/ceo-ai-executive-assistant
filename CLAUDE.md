@@ -22,7 +22,8 @@ in Prompt 01 and record it in `reference/platform.md`, then:
 **Never mix stacks.** Only the brain (`claude -p`) and `wacli` are cross-platform. iMessage
 is **macOS-only** (no Windows equivalent — record as a blind spot there). See
 `reference/ARCHITECTURE.md` → "Platform abstraction" for the full capability mapping
-(Outlook COM, Microsoft To Do, OneNote/Markdown, etc.).
+(Outlook COM, Microsoft To Do, OneNote/Markdown, etc.). On Windows, also read
+`reference/WINDOWS-NOTES.md` (prerequisites, Graph fallback, Task Scheduler trap).
 
 ## Architecture (non-negotiable)
 

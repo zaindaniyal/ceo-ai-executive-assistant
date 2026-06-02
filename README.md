@@ -1,5 +1,10 @@
 # CEO Executive Assistant AI
 
+> A cross-platform (macOS / Windows), fully-local AI executive assistant for a busy CEO —
+> a build-prompt set that stands up a daily brief and multi-channel commitment capture
+> (email, calendar, WhatsApp, iMessage) into reminders and notes, with nothing leaving the
+> machine.
+
 A generic, local AI executive assistant for a busy CEO. This folder is the **authoring
 workspace** — it contains a set of **prompts** you paste, one at a time, into fresh Claude
 Code sessions **on the executive's machine**. Each prompt makes that session build a piece
@@ -66,3 +71,7 @@ mapping in `reference/ARCHITECTURE.md` → "Platform abstraction".
 - **Don't create moot tasks.** Temporal reconciliation against the calendar + later replies.
 - **`wacli` interface is discovered, not assumed.** WhatsApp prompts run `wacli --help` first.
 - **Verify each piece** before moving on (each prompt ends with an explicit test step).
+
+## License
+
+[MIT](LICENSE) © 2026 Zain Daniyal

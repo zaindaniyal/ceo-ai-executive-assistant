@@ -37,7 +37,8 @@ mapping in `reference/ARCHITECTURE.md` → "Platform abstraction".
 ## How to use this folder
 
 1. **Read `reference/ARCHITECTURE.md` first.** It's the shared model every prompt assumes.
-2. Copy the project to the executive's machine (or just keep the prompts handy and paste them).
+2. Copy the project to the executive's machine, then paste **`prompts/00_kickoff.md`** to
+   orient the session and drive the build with a stop after each step.
 3. Open a **fresh Claude Code session** for **each** prompt, in order. Fresh sessions keep
    context clean and let each build step be reviewed independently.
 4. Paste the contents of the prompt file. Let the session build + verify that piece.

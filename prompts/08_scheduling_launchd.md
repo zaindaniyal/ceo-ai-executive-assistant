@@ -1,7 +1,8 @@
 # PROMPT 08 — Scheduling everything with launchd
 
-> Paste into a fresh Claude Code session on the CEO's Mac. Build #7 (paste this BEFORE the
-> historical backfill). Assumes Prompts 01–06 produced working, hand-verified scripts.
+> Paste into a fresh Claude Code session on the CEO's Mac. Build #12 in the live order (paste
+> this BEFORE the historical backfill). Assumes Prompts 01–06 + 10–14 produced working,
+> hand-verified scripts.
 
 ## Context
 
@@ -17,8 +18,10 @@ sandbox that can't see the Automation grants. This machine runs all the time, so
 > **Platform note.** This prompt is written for **launchd (macOS)**. On **Windows**, deliver
 > the *identical cadence* with **Task Scheduler** instead:
 > - One `Register-ScheduledTask` per job, pointing at the `.ps1` wrappers in `bin/`:
->   four extractors every **5 min** (repetition interval), the brain every **45 min**, the
->   daily brief **daily at 06:30**. (No iMessage task on Windows.)
+>   the extractors every **5 min** (meeting extractor every **30 min**), the commitment brain
+>   every **45 min**, the meeting-assistant **hourly**, the **goal-detector daily at 05:30**,
+>   the daily brief **daily at 06:30**, and the weekly/monthly/quarterly briefs on their
+>   first-of-period days. (No iMessage task on Windows.)
 > - Build `schedule/assistant-ctl.ps1` with the same subcommands —
 >   `load`/`unload`/`reload`/`status`/`kick` mapping to
 >   `Register-ScheduledTask` / `Unregister-ScheduledTask` / `Get-ScheduledTask` /
@@ -51,11 +54,25 @@ Jobs and cadence:
 | `com.exec-assistant.extract-calendar` | `bin/extract_calendar.sh` | `StartInterval` 300 |
 | `com.exec-assistant.extract-messages` | `bin/extract_messages.sh` | `StartInterval` 300 |
 | `com.exec-assistant.extract-whatsapp` | `bin/extract_whatsapp.sh` | `StartInterval` 300 |
+| `com.exec-assistant.extract-meetings` | `bin/extract_meetings.sh` | `StartInterval` 1800 (30 min) |
 | `com.exec-assistant.brain-commitments` | `bin/run_brain.sh` | `StartInterval` 2700 (45 min) |
+| `com.exec-assistant.meeting-assistant` | `bin/run_meeting_assistant.sh` | `StartInterval` 3600 (60 min) |
 | `com.exec-assistant.daily-brief` | `bin/run_brief.sh` | `StartCalendarInterval` 06:30 daily |
+| `com.exec-assistant.goal-detector` | `bin/run_goal_detector.sh` | `StartCalendarInterval` 05:30 daily |
+| `com.exec-assistant.weekly-brief` | `bin/run_weekly_brief.sh` | `StartCalendarInterval` Mon 06:45 |
+| `com.exec-assistant.monthly-checkin` | `bin/run_monthly_checkin.sh` | `StartCalendarInterval` day 1, 07:00 |
+| `com.exec-assistant.quarterly-brief` | `bin/run_quarterly_brief.sh` | `StartCalendarInterval` Jan/Apr/Jul/Oct 1, 07:15 |
 
-Stagger the four extractors so they don't all fire on the same second (e.g. offset by using
+Stagger the extractors so they don't all fire on the same second (e.g. offset by using
 slightly different intervals, or `ThrottleInterval`) — mostly to avoid `wacli` contention.
+
+Cadence notes: the **meeting extractor** runs every 30 min (meetings don't finish every 5
+min); the **meeting-assistant** brain hourly. The **goal-detector** runs once daily at 05:30
+so the Goals note is fresh **before** the 06:30 daily brief reads it. Weekly/monthly/quarterly
+fire just before the daily brief on their respective first-of-period days. `launchd` does not
+have a native "first Monday of the quarter" — use a `StartCalendarInterval` on the 1st and let
+the script itself no-op if it's not the right month/weekday (record last-run in `state/`).
+Email delivery has **no job of its own** — it piggybacks on the brief jobs (Prompt 14).
 
 ### 2. Control script `schedule/assistant-ctl.sh`
 
@@ -77,7 +94,7 @@ A small helper with subcommands:
 
 ## Verify
 
-1. `assistant-ctl.sh load`, then `assistant-ctl.sh status` → all six labels present, no crash codes.
+1. `assistant-ctl.sh load`, then `assistant-ctl.sh status` → all labels present, no crash codes.
 2. `assistant-ctl.sh kick com.exec-assistant.extract-mail` → fresh `state/mail.json` timestamp + clean
    log.
 3. Kick `brain-commitments` → confirm it runs end-to-end under launchd (this is where TCC

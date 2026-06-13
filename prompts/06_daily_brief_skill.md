@@ -1,6 +1,7 @@
 # PROMPT 06 — Daily Brief skill (Tier 2 brain)
 
-> Paste into a fresh Claude Code session on the CEO's Mac. Build #6. Assumes Prompts 01–05.
+> Paste into a fresh Claude Code session on the CEO's Mac. Build #8 in the live order.
+> Assumes Prompts 01–05 + 10–11 (extractors, writers, meeting assistant).
 
 > **Platform note.** Writes via the Tier-3 note writer chosen in Prompt 04 (Apple Notes on
 > macOS; OneNote or a synced Markdown file on Windows). Entrypoint `bin/run_brief.sh` (macOS)
@@ -18,13 +19,17 @@ helper. Build it as a skill at `~/ceo-ai-executive-assistant/.claude/skills/dail
 
 - `state/calendar.json` (today's events — and note conflicts/double-bookings).
 - `state/mail.json`, `state/imessage.json`, `state/whatsapp.json` (overnight + recent).
+- `state/meetings.json` + the meeting notes (Prompt 11) — yesterday's/today's meetings.
+- The **Goals note** (Prompt 12) + `state/config.json` → `goals_note_link` — so the brief can
+  report progress and link to it.
 - `state/processed.json` and the day's "Tasks / Follow-ups" already created by the
   commitment-detector — so the brief reflects open follow-ups, not a re-detection.
 
-## Output — one note, today's date, in "Daily Briefs"
+## Output — one note, today's date, in the configured notes backend
 
-Use `bin/upsert_note.applescript` to write/refresh today's `Daily Brief — YYYY-MM-DD` note.
-Sections (H2s), kept tight — this is a glance, not a report:
+Use `bin/upsert_note.sh` to write/refresh today's `Daily Brief — YYYY-MM-DD` note (it lands in
+Apple Notes / Obsidian / both per `notes_backend`). Sections (H2s), kept tight — this is a
+glance, not a report:
 
 1. **Today's Schedule** — chronological timeline of today's events across all calendars,
    with times, titles, locations, and **flagged conflicts / double-bookings**. Note the
@@ -35,10 +40,19 @@ Sections (H2s), kept tight — this is a glance, not a report:
    section the commitment-detector maintains; don't recompute). Each with name + handle.
 4. **Needs a Decision / Reply** — inbound emails or messages that look like they're waiting
    on *him* specifically (questions, approvals, scheduling) — with who + one-line summary.
-5. **Heads-up** — flights/travel, anything time-sensitive in the next 24–48h.
+5. **Meetings** — today's meetings + a one-line takeaway from yesterday's, each **linked** to
+   its meeting note (`[[Meeting — …]]` in Obsidian / the Apple Notes link).
+6. **Goals & Progress** — 2–4 lines on movement toward his goals, pulled from the Goals note,
+   with a **link to it** (`[[Goals]]` / `goals_note_link`). This is the daily nudge that keeps
+   goals visible; the deep scoring happens in the weekly/monthly/quarterly check-ins (Prompt 13).
+7. **Heads-up** — flights/travel, anything time-sensitive in the next 24–48h.
 
 Keep the whole thing to roughly one screen. Prefer bullets over prose. If a section is
 empty, show it with "— none —" rather than dropping it (consistency helps him scan).
+
+> **Email delivery.** After the note is written, if `state/config.json` →
+> `email_brief.enabled` is true, the brief is also emailed to the CEO so it lands as a phone
+> notification — wired in Prompt 14. The note is always the source of truth; email is secondary.
 
 ## Discipline
 
@@ -54,8 +68,9 @@ empty, show it with "— none —" rather than dropping it (consistency helps hi
 ## Verify
 
 1. Run `bin/run_brief.sh` once. Open the resulting Apple Note and show me its content.
-2. Confirm it reads today's real calendar + open follow-ups and renders all five sections,
-   conflicts flagged, blind spots noted.
+2. Confirm it reads today's real calendar + open follow-ups and renders all seven sections
+   (incl. Meetings + Goals & Progress with a working link to the Goals note), conflicts
+   flagged, blind spots noted.
 3. Run again → confirm it **updates in place** (idempotent upsert), not a second note.
 
 Do not wire launchd yet (Prompt 08).

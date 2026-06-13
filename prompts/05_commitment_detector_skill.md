@@ -1,7 +1,8 @@
 # PROMPT 05 — Commitment-detector skill (Tier 2 brain)
 
-> Paste into a fresh Claude Code session on the CEO's Mac. Build #5 — the heart of the
-> system. Assumes Prompts 01–04 done (extractors producing JSON; writers working).
+> Paste into a fresh Claude Code session on the CEO's Mac. Build #6 in the live order — the
+> heart of the system. Assumes Prompts 01–04 + 10 done (extractors producing JSON; writers
+> working).
 
 > **Platform note.** The brain is platform-agnostic reasoning, but it shells out to the
 > Tier-3 writers from Prompt 04 — call whichever exist for this OS (`*.applescript` on macOS,
@@ -23,6 +24,11 @@ headlessly (`claude -p` with the skill) for launchd to call.
 ## Inputs it reads
 
 - `state/mail.json`, `state/imessage.json`, `state/whatsapp.json` — recent messages.
+- `state/meetings.json` — recent meeting transcripts (Prompt 10). Scan these for spoken asks
+  too (e.g. "I'll send you the deck"). *Deep* per-meeting summaries are the meeting-assistant's
+  job (Prompt 11); here just catch clear commitments, and dedup against it via the shared
+  `processed.json` (use the same per-commitment id = meeting id + quote hash) so the two
+  brains never double-create the same task.
 - `state/calendar.json` — events from −5 to +7 days (past events included on purpose).
 - `state/processed.json` — the **dedup ledger**: source-ids already actioned. Load it,
   skip anything already in it, and append new ids after acting.
@@ -69,7 +75,7 @@ later reply. Cross-reference before writing. When you suppress something, log *w
 For each **surviving** commitment not already in `processed.json`:
 1. Call `bin/add_reminder.applescript` with title, context body (quote + name + handle +
    channel + original datetime + `src:<id>`), `dueISO`, list "Exec Assistant".
-2. Call `bin/upsert_note.applescript` to add the same line to today's Daily Brief note,
+2. Call `bin/upsert_note.sh` to add the same line to today's Daily Brief note,
    "Tasks / Follow-ups" section.
 3. Append the source-id to `state/processed.json`.
 

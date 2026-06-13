@@ -21,11 +21,18 @@ START BY READING, IN THIS ORDER:
 3. README.md                    (the build order)
 4. reference/WINDOWS-NOTES.md   (ONLY if this is a Windows machine)
 
-Then build by executing the prompts in prompts/ IN ORDER, one at a time:
-  01 → 02 → 03 → 04 → 05 → 06 → 08 (scheduling) → 07 (one-time backfill) → 09 (later/skip)
+Then build by executing the prompts in prompts/ IN ORDER, one at a time (file numbers aren't
+sequential — 10–14 were appended later; follow THIS order):
+  01 → 02 → 03 → 10 (meeting extract) → 04 (writers) → 05 (commitments) →
+  11 (meeting-assistant) → 06 (daily brief) → 12 (goal-detector) →
+  13 (weekly/monthly/quarterly) → 14 (email) → 08 (scheduling) →
+  07 (one-time backfill) → 09 (optional backend switch)
 
-PLATFORM:
+PLATFORM & SETUP CHOICES:
 - Prompt 01 detects whether this is macOS or Windows and records it in reference/platform.md.
+- Prompt 01 also asks ME to choose the second-brain backend (Obsidian / Apple Notes / both)
+  and records what meeting tools (Otter/Fireflies) + email-send are connected
+  (reference/integrations.md).
 - macOS  → every script is AppleScript/shell, scheduled by launchd.
 - Windows → every script is PowerShell (.ps1), scheduled by Task Scheduler.
 - Never mix stacks. iMessage is macOS-only (skip it on Windows).
@@ -33,7 +40,9 @@ PLATFORM:
 RULES FOR HOW YOU WORK:
 - Do ONE prompt fully, run its built-in verify step, and SHOW ME the results.
 - Then STOP and wait for me to say "continue" before starting the next prompt.
-- Prompt 01 needs me to grant OS permissions and confirm `wacli` is logged in:
+- Prompt 01 needs me to: grant OS permissions, confirm `wacli` is logged in, CHOOSE the
+  notes backend (Obsidian/Apple/both + vault path), and confirm meeting-tool + email-send
+  connections:
     * macOS  → Full Disk Access + Automation toggles. Tell me exactly what to click;
                don't guess past a permission failure.
     * Windows → confirm classic Outlook COM works (or fall back to Graph), and the

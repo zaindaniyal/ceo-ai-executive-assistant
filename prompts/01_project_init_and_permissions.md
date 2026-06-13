@@ -37,6 +37,55 @@ Detect whether this is macOS or Windows. Write the result + the chosen stack to
 columns — execute only the one matching this machine.** If you're unsure which OS, stop and
 ask me.
 
+### 0b. Choose the second-brain + task backends, and record the connections
+
+The person setting this up gets to choose **where the assistant stores everything** (the
+"second brain") and **where tasks go**. Ask me, then record the answers in **two files**:
+`state/config.json` (machine-readable, read by every later script) and `reference/config.md`
+(human-readable). Ask:
+
+- **Notes backend** — where briefs, meeting notes, and goals are written:
+  `obsidian` | `apple` | `both`. **Obsidian is the recommended primary** (Markdown vault,
+  greppable, `[[backlinks]]`, syncable). `both` writes to Apple Notes *and* the Obsidian vault.
+  - If `obsidian` or `both`: capture the **vault path** and a target subfolder (e.g.
+    `CEO Assistant/`). Check whether the **Obsidian CLI** is installed (`which obsidian` /
+    the user may have the built-in `Obsidian` binary on PATH) — record it; the note writer
+    (Prompt 04) prefers direct Markdown file I/O but can use the CLI for append/search/sync.
+  - If `apple` or `both`: confirm the Apple Notes Automation grant (below).
+- **Tasks backend** — `apple_reminders` (macOS) / `microsoft_todo` (Windows) is the default
+  to-do list. Record the list name (default "Exec Assistant").
+
+Write `state/config.json`, e.g.:
+```json
+{
+  "notes_backend": "obsidian",
+  "obsidian": { "vault_path": "/Users/<me>/Vault", "folder": "CEO Assistant", "cli": true },
+  "apple_notes": { "folder": "Daily Briefs" },
+  "tasks_backend": "apple_reminders",
+  "reminder_list": "Exec Assistant",
+  "email_brief": { "enabled": false, "to": "", "from_account": "", "periods": ["daily"] },
+  "goals_note_link": ""
+}
+```
+
+### 0c. Discover meeting-transcript + email-send connections, and write `reference/integrations.md`
+
+This assistant also ingests **meeting transcripts** (Otter / Fireflies / etc.) and can
+**email the briefs**. Find out what's actually connected and record it — "keep a note of
+whatever we're connected to" is a standing requirement.
+
+- **Meeting tools** — check for a **Fireflies** API key (env / `.env` / Keychain /
+  `state/config.json`); check whether **Otter** delivers transcripts by email or to a synced
+  folder; ask if there's a local transcript folder. Record provider, auth method, where the
+  secret lives, and what's reachable. Don't assume — verify a connected provider with a tiny
+  call. (Full extractor is Prompt 10.)
+- **Email send** — confirm a Mail.app account (macOS) / Outlook (Windows) can **send** a
+  message silently (no foreground window). Note which account would send the briefs. (Wiring
+  is Prompt 14.)
+
+Write all of this to `reference/integrations.md` as the canonical connection log, and keep it
+current whenever a connection changes.
+
 ### 1. Create the project skeleton
 
 Create this layout (use `~` on macOS, `%USERPROFILE%` on Windows) at the project root
@@ -131,6 +180,10 @@ Report the output.
 ## Done when
 
 - `reference/platform.md` records the OS + chosen stack (+ Windows backend choices / blind spots).
+- `state/config.json` + `reference/config.md` record the chosen **notes backend**
+  (obsidian/apple/both, vault path if relevant) and **tasks backend**.
+- `reference/integrations.md` records the **meeting-tool** connections (Fireflies/Otter/folder)
+  and the **email-send** account — or notes each as "not connected".
 - The directory tree exists; `.gitignore` protects `state/` and `logs/`.
 - **macOS:** chat.db probe returns a count; all five Automation probes pass.
   **Windows:** Outlook COM lists accounts; execution policy allows our scripts; To Do/Notes

@@ -6,10 +6,20 @@ building anything.
 
 ## What this is
 
-A local-only assistant that watches the CEO's channels (~4 email accounts, ~4 calendars,
-WhatsApp, iMessage), produces a **Daily Brief** in Apple Notes, and turns **commitments**
-("email me the deck", "I'll call you next week", "let's catch up") into **Apple Reminders**
-+ Daily-Brief task lines — without letting anything fall through the cracks.
+A local-first assistant that watches the CEO's channels (~4 email accounts, ~4 calendars,
+WhatsApp, iMessage, **meeting transcripts from Otter/Fireflies**), and:
+
+- produces a **Daily Brief** (and **weekly / monthly / quarterly** briefs) into the CEO's
+  **second brain** — **Obsidian, Apple Notes, or both** (chosen at setup);
+- turns **commitments** ("email me the deck", "I'll call you next week", spoken asks in
+  meetings) into **Apple Reminders** + Daily-Brief task lines;
+- reads **full meeting transcripts** and writes its **own** summary/decisions/action-items —
+  never just trusting the vendor's auto-summary;
+- runs a **daily goal-detection** pass that infers the CEO's goals across every signal and
+  maintains a living **Goals note** (weekly/monthly/yearly × spiritual / knowledge & growth /
+  personal / family / professional / other), diffing daily and checking in weekly/monthly;
+- **emails the briefs** to him (opt-in) so they land as a phone notification —
+  without letting anything fall through the cracks.
 
 ## Platform (decide once, then commit)
 
@@ -29,18 +39,27 @@ is **macOS-only** (no Windows equivalent — record as a blind spot there). See
 
 Three tiers — keep them separate:
 
-1. **Extractors (Tier 1)** — dumb, cheap AppleScript/shell fired by **launchd every ~5 min**.
-   No LLM. Dump raw recent data to JSON in `state/`. Atomic writes, no dialogs, no foreground.
-2. **Brain (Tier 2)** — headless `claude -p`, fired **less often** (~45 min; brief once each
-   morning). Reads the JSON, reasons, acts. The only tier that costs tokens — keep it tight,
-   feed it only unprocessed items.
-3. **Writers (Tier 3)** — small AppleScript helpers the brain shells out to (Reminders, Notes).
+1. **Extractors (Tier 1)** — dumb, cheap AppleScript/shell fired by **launchd every ~5 min**
+   (meeting extractor every ~30 min). No LLM. Dump raw recent data to JSON in `state/`
+   (mail, calendar, iMessage, WhatsApp, **meetings**). Atomic writes, no dialogs, no foreground.
+2. **Brain (Tier 2)** — headless `claude -p`, fired **less often**: commitment-detector ~45
+   min, meeting-assistant ~hourly, daily brief once each morning, **goal-detector once daily**,
+   weekly/monthly/quarterly briefs on their cadence. Reads the JSON, reasons, acts. The only
+   tier that costs tokens — keep it tight, feed it only unprocessed items.
+3. **Writers (Tier 3)** — small helpers the brain shells out to: the reminder writer, the
+   **backend-dispatching note writer** (`upsert_note.sh` → Apple Notes / Obsidian / both per
+   `state/config.json`), and the **email sender**.
 
 Do not collapse these. Do not make an extractor call the LLM. Do not run the brain every 5 min.
 
 ## Hard rules
 
-- **Local only.** No message or email content ever leaves this Mac.
+- **Local only — one deliberate exception.** No message, email, or transcript content ever
+  leaves this Mac, **except** the daily/periodic brief email, which the CEO opted into and which
+  only ever sends **to himself** from **his own** mail account. Everything else stays local.
+- **Read the transcript, not just the vendor summary.** For meetings, the brain forms its own
+  summary/decisions/action-items from the full transcript; the Otter/Fireflies auto-summary is
+  a cross-check, never the source of truth.
 - **Idempotent.** Everything is keyed by a stable source id and recorded in
   `state/processed.json`. Extractors run every 5 min and the brain re-runs — a given message
   may produce **at most one** reminder. Prove dedup with a double-run on any change.
@@ -55,13 +74,17 @@ Do not collapse these. Do not make an extractor call the LLM. Do not run the bra
 - **`wacli` is the WhatsApp CLI — discover its interface, don't assume flags.** Run
   `wacli --help` first; record findings in `reference/wacli.md`.
 
-## Destinations (decided)
+## Destinations (config-driven — chosen in Prompt 01, in `state/config.json`)
 
-- **Daily Brief** → Apple **Notes**, one dated note per day in a "Daily Briefs" folder.
-- **Commitments/tasks** → **both** Apple **Reminders** (list "Exec Assistant") **and** the
-  "Tasks / Follow-ups" section of that day's brief note.
-- Future: migrate Notes → Obsidian behind a config flag (`prompts/09_obsidian_future.md`).
-  Not yet.
+- **Notes (second brain)** → `notes_backend`: **`obsidian`** (recommended primary, Markdown
+  vault + `[[backlinks]]`), **`apple`** (Apple Notes), or **`both`**. Covers Daily/periodic
+  Briefs, Meeting notes, and the Goals note. Every skill calls one `bin/upsert_note.sh`
+  dispatcher and is backend-agnostic.
+- **Commitments/tasks** → **both** the tasks backend (Apple **Reminders** / Microsoft To Do,
+  list "Exec Assistant") **and** the "Tasks / Follow-ups" section of that day's brief note.
+- **Goals** → a single living **Goals note** in the same notes backend; briefs **link** to it.
+- **Email delivery** → optional (`email_brief.enabled`); the brief is also emailed to the CEO.
+- Switching/migrating the notes backend later is an optional helper (`prompts/09_switch_notes_backend.md`).
 
 ## Platform facts (get these right)
 
@@ -80,13 +103,17 @@ Do not collapse these. Do not make an extractor call the LLM. Do not run the bra
 
 ```
 ~/ceo-ai-executive-assistant/
-  bin/        extractor + writer scripts
-  state/      JSON snapshots + processed.json ledger — PRIVATE, gitignored
+  bin/        extractor + writer scripts (incl. extract_meetings, upsert_note dispatcher,
+              upsert_note_apple / upsert_note_obsidian, send_email)
+  state/      JSON snapshots + processed.json ledger + config.json + briefs/ meetings/ goals.md
+              — PRIVATE, gitignored
   logs/       launchd stdout/stderr
   schedule/   launchd *.plist (mac) or Task Scheduler reg (win) + assistant-ctl
-  .claude/skills/   commitment-detector, daily-brief, historical-backfill
-  reference/  ARCHITECTURE.md, accounts.md, wacli.md, message_schema.md
-  prompts/    the build prompts (01–09), pasted one per fresh session in order
+  .claude/skills/   commitment-detector, daily-brief, meeting-assistant, goal-detector,
+                    periodic-briefs, historical-backfill
+  reference/  ARCHITECTURE.md, platform.md, config.md, accounts.md, wacli.md,
+              integrations.md, message_schema.md
+  prompts/    the build prompts (01–14), pasted one per fresh session in order
 ```
 
 ## Conventions
@@ -99,5 +126,7 @@ Do not collapse these. Do not make an extractor call the LLM. Do not run the bra
 
 ## Build order
 
-`prompts/01 → 02 → 03 → 04 → 05 → 06 → 08 (scheduling) → 07 (one-time backfill) → 09 (later)`.
+`prompts/01 → 02 → 03 → 10 (meeting extract) → 04 (writers) → 05 (commitments) →
+11 (meeting-assistant) → 06 (daily brief) → 12 (goal-detector) → 13 (weekly/monthly/quarterly) →
+14 (email delivery) → 08 (scheduling) → 07 (one-time backfill) → 09 (optional backend switch)`.
 One fresh session per prompt; each ends with an explicit verify step — don't skip it.

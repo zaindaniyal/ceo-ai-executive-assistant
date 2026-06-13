@@ -6,14 +6,21 @@
 
 ## The problem
 
-The CEO runs hot: ~4 calendars, ~4 email accounts, WhatsApp, iMessage, constant
-travel and back-to-back meetings. Things fall through the cracks — specifically **verbal
-and written commitments**:
+The CEO runs hot: ~4 calendars, ~4 email accounts, WhatsApp, iMessage, **back-to-back meetings
+that get transcribed** (Otter/Fireflies), constant travel. Things fall through the cracks —
+specifically **verbal and written commitments**:
 
 - Someone tells him "email me the deck" / "send me that contract" → he must follow up.
 - He tells someone "I'll call you next week" / "let's catch up" → he must follow up.
+- A decision or action item is **spoken in a meeting** and the vendor's auto-summary misses it.
 
-He needs (a) a **daily brief** and (b) **nothing to fall through the cracks**.
+He also loses sight of the **bigger picture** — what he's actually trying to achieve across
+spiritual, knowledge/growth, personal, family, and professional life.
+
+He needs: (a) a **daily brief** (plus weekly/monthly/quarterly zoom-outs), (b) **nothing to
+fall through the cracks**, (c) his **meetings read properly** (own summary, not just the
+vendor's), (d) his **goals tracked** and progressed, and (e) it all in a **second brain**
+(Obsidian / Apple Notes) with the briefs **emailed** to him.
 
 ## Design principle: split "extract" from "brain"
 
@@ -23,29 +30,40 @@ has two tiers:
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │  TIER 1 — EXTRACTORS  (plain AppleScript / shell, fired by launchd)   │
-│  Cheap, dumb, frequent (~every 5 min). No LLM. Just dump raw data.    │
+│  Cheap, dumb, frequent (~5 min; meetings ~30 min). No LLM. Dump raw.  │
 │                                                                       │
 │   extract_mail.applescript      → state/mail.json                     │
 │   extract_calendar.applescript  → state/calendar.json                 │
 │   extract_messages.sh (chat.db) → state/imessage.json                 │
 │   extract_whatsapp.sh (wacli)   → state/whatsapp.json                 │
+│   extract_meetings.sh (Otter/   → state/meetings.json  (full          │
+│      Fireflies/folder)             transcript + vendor summary, kept   │
+│                                    separate)                           │
 └─────────────────────────────────────────────────────────────────────┘
                                 │  (raw JSON snapshots on disk)
                                 ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │  TIER 2 — BRAIN  (headless `claude -p`, fired by launchd less often)  │
 │  Reads the JSON snapshots, reasons, acts. Costs tokens, so runs       │
-│  ~every 30–60 min + once at brief time, NOT every 5 min.              │
+│  on modest cadences, NOT every 5 min.                                 │
 │                                                                       │
-│   commitment-detector  → finds promises → Reminders + Notes           │
-│   daily-brief          → builds the morning brief → Apple Notes        │
+│   commitment-detector  ~45m → promises → Reminders + Notes            │
+│   meeting-assistant    ~60m → OWN summary from transcript →           │
+│                               meeting note + commitments              │
+│   daily-brief          06:30 → morning brief (+ goals link) → Notes   │
+│   goal-detector        05:30 → deep goal analysis + daily diff →      │
+│                               living Goals note                        │
+│   weekly/monthly/quarterly briefs + goal check-ins → Notes           │
 └─────────────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│  TIER 3 — WRITERS  (AppleScript helpers the brain shells out to)     │
-│   add_reminder.applescript   → Apple Reminders                        │
-│   upsert_note.applescript    → Apple Notes (Daily Brief, dated)       │
+│  TIER 3 — WRITERS  (helpers the brain shells out to)                 │
+│   add_reminder.applescript   → Apple Reminders / Microsoft To Do      │
+│   upsert_note.sh  (dispatch) → Apple Notes AND/OR Obsidian vault      │
+│        ├ upsert_note_apple.applescript   → Apple Notes (HTML)         │
+│        └ upsert_note_obsidian.sh         → Markdown in the vault      │
+│   send_email.applescript     → emails the brief (opt-in) to the CEO   │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -78,8 +96,10 @@ Capability mapping (Tier 1 extractors + Tier 3 writers resolve to the right colu
 | Calendar read | `icalBuddy` / Calendar.app | Outlook Calendar via COM; or Microsoft Graph |
 | iMessage | `~/Library/Messages/chat.db` (SQLite) | **N/A — iMessage doesn't exist on Windows.** Skip the extractor; record it as a permanent blind spot. (Phone Link's DB is unreliable; don't depend on it.) |
 | WhatsApp | `wacli` | `wacli` (same cross-platform CLI) |
+| Meeting transcripts | Fireflies GraphQL API / Otter email-or-folder / local transcript folder (cloud, OS-agnostic) | same — HTTP/email/folder, not OS-specific |
 | Reminders / Tasks | Apple Reminders via AppleScript | Microsoft To Do via Graph, or Outlook Tasks via COM |
-| Notes (Daily Brief) | Apple Notes via AppleScript | OneNote via COM/Graph, **or** a Markdown file in a synced folder (simplest, recommended fallback) |
+| Notes (second brain) | **Obsidian** (Markdown vault, recommended) and/or **Apple Notes** via AppleScript — `notes_backend` config | **Obsidian** (Markdown vault) and/or OneNote via COM/Graph — same config flag |
+| Email the brief | Mail.app via AppleScript (send only, no foreground) | Outlook COM `MailItem.Send()` |
 | Scheduler | launchd LaunchAgents (`StartInterval`) | Task Scheduler (`Register-ScheduledTask`, repetition interval) |
 | Permissions model | TCC: Full Disk Access + Automation grants | Outlook "programmatic access" / Trust Center; Graph app registration + OAuth token |
 | Brain invoke | `claude -p` | `claude -p` (same) |
@@ -88,14 +108,19 @@ Capability mapping (Tier 1 extractors + Tier 3 writers resolve to the right colu
 Each prompt below states its macOS path in full and its Windows equivalent in a **Platform
 note**. The session executes only the column matching the detected OS.
 
-## Where things land (decided)
+## Where things land (config-driven — `state/config.json`, chosen in Prompt 01)
 
-- **Daily Brief** → Apple **Notes**, one dated note per day in a "Daily Briefs" folder.
+- **Notes (the second brain)** → `notes_backend`: **`obsidian`** (Markdown vault, recommended
+  primary — greppable, `[[backlinks]]`, syncable), **`apple`** (Apple Notes), or **`both`**.
+  Holds the Daily/Weekly/Monthly/Quarterly briefs, the per-meeting notes, and the Goals note.
+  Every skill calls the single `bin/upsert_note.sh` dispatcher and is backend-agnostic.
 - **Commitments / tasks** → written to **BOTH**:
-  - the Apple **Reminders** app (so they show on his phone with due dates), AND
+  - the Apple **Reminders** / Microsoft To Do app (so they show on his phone with due dates), AND
   - a "Tasks / Follow-ups" section inside that day's Daily Brief **note**.
-- Everything stays **local**. No message/email content leaves the Mac.
-- (Future) migrate Notes → Obsidian. Not now. See `09_obsidian_future.md`.
+- **Goals** → one living **Goals note** in the notes backend; every brief links to it.
+- **Email delivery** → `email_brief.enabled` — the rendered brief is also emailed to the CEO.
+- Everything stays **local** except that opt-in brief email (to himself, from his own account).
+- Switching/migrating the backend later: optional helper `09_switch_notes_backend.md`.
 
 ## Directory layout (created on the CEO's Mac)
 
@@ -106,22 +131,36 @@ note**. The session executes only the column matching the detected OS.
     extract_calendar.applescript
     extract_messages.sh
     extract_whatsapp.sh
+    extract_meetings.sh           # Otter/Fireflies/folder transcripts
     add_reminder.applescript
-    upsert_note.applescript
-    run_brain.sh            # wrapper that invokes `claude -p` with the right skill
-  state/                    # JSON snapshots + dedup ledgers (gitignored, private)
-    mail.json
-    calendar.json
-    imessage.json
-    whatsapp.json
-    processed.json          # ledger of already-actioned message IDs (dedup)
+    upsert_note.sh                # backend dispatcher (apple | obsidian | both)
+    upsert_note_apple.applescript
+    upsert_note_obsidian.sh
+    send_email.applescript        # opt-in brief delivery
+    run_brain.sh                  # commitment-detector wrapper
+    run_meeting_assistant.sh
+    run_brief.sh                  # daily
+    run_goal_detector.sh
+    run_weekly_brief.sh / run_monthly_checkin.sh / run_quarterly_brief.sh
+  state/                    # JSON snapshots + ledgers + config (gitignored, private)
+    config.json             # notes_backend, vault path, reminder list, email_brief, goals_note_link
+    mail.json / calendar.json / imessage.json / whatsapp.json / meetings.json
+    processed.json          # ledger of already-actioned message/meeting/commitment IDs (dedup)
+    briefs/<date>.md        # canonical Markdown copies of briefs
+    meetings/<id>.md        # canonical meeting notes
+    goals.md                # canonical Goals note
   logs/                     # scheduler stdout/stderr
   schedule/                 # launchd *.plist (mac) / Task Scheduler reg (win) + control script
   .claude/
     skills/
       commitment-detector/
+      meeting-assistant/
       daily-brief/
+      goal-detector/
+      periodic-briefs/
       historical-backfill/
+  reference/                # ARCHITECTURE.md, platform.md, config.md, accounts.md,
+                            # wacli.md, integrations.md, message_schema.md, ROADMAP.md
   README.md
 ```
 
@@ -197,14 +236,33 @@ This is why the calendar extractor captures **past** events (−5 to −14 days)
 upcoming ones. Every suppression is logged with its reason for audit. When genuinely unsure,
 prefer flagging low-confidence over silently dropping real work.
 
+## Meetings & goals — what the two newer brains do
+
+- **Meeting-assistant** (`11`): for each meeting in `meetings.json`, reads the **full
+  transcript** and writes its **own** TL;DR / decisions / action-items-by-owner / open
+  questions / vendor-summary delta to a meeting note, and routes spoken commitments through the
+  same Reminder + dedup pipeline. The vendor (Otter/Fireflies) summary is a cross-check only.
+- **Goal-detector** (`12`): once daily, deep-analyses every signal (mail, WhatsApp, iMessage,
+  **meeting transcripts**, calendar, notes, reminders) to infer goals, organized by
+  **horizon** (weekly/monthly/yearly) × **category** (spiritual / knowledge & growth / personal
+  / family / professional / other) into a single living **Goals note**. First run = full
+  analysis; every later run **diffs** for new/progressed/stale goals, non-destructively. The
+  daily brief links it; weekly/monthly/quarterly briefs (`13`) score progress against it.
+
 ## Build order (paste prompts in this sequence)
 
-1. `01_project_init_and_permissions.md` — skeleton + permissions + verify `wacli`.
+1. `01_project_init_and_permissions.md` — skeleton + **backend & integrations choices** +
+   permissions + verify `wacli`.
 2. `02_extract_mail_calendar.md`
 3. `03_extract_messages_whatsapp.md`
-4. `04_writers_reminders_notes.md`
-5. `05_commitment_detector_skill.md`
-6. `06_daily_brief_skill.md`
-7. `08_scheduling_launchd.md`  ← wire up launchd once the pieces exist
-8. `07_historical_backfill_2weeks.md`  ← one-time 2-week sweep, run manually
-9. `09_obsidian_future.md` — later, when migrating off Apple Notes.
+4. `10_extract_meetings.md`  ← meeting transcripts (Tier 1)
+5. `04_writers_reminders_notes.md`  ← reminder + backend-dispatching note writer
+6. `05_commitment_detector_skill.md`
+7. `11_meeting_assistant_skill.md`  ← own summaries from transcripts
+8. `06_daily_brief_skill.md`
+9. `12_goal_detector_skill.md`  ← daily deep goal analysis + diff
+10. `13_periodic_briefs_and_checkins.md`  ← weekly/monthly/quarterly + goal check-ins
+11. `14_email_delivery.md`  ← email the briefs
+12. `08_scheduling_launchd.md`  ← wire up launchd once the pieces exist
+13. `07_historical_backfill_2weeks.md`  ← one-time 2-week sweep, run manually
+14. `09_switch_notes_backend.md` — optional, only to change/migrate the notes backend later.

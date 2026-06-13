@@ -1,12 +1,15 @@
 # PROMPT 07 — One-time historical backfill (last 2 weeks)
 
-> Paste into a fresh Claude Code session on the CEO's Mac. Build #8 — run AFTER the live
-> system (Prompts 01–06 + 08) is verified. This is a **one-time** manual sweep, not a
-> scheduled job.
+> Paste into a fresh Claude Code session on the CEO's Mac. Build #13 in the live order — run
+> AFTER the live system (Prompts 01–06, 10–14 + 08 scheduling) is verified. This is a
+> **one-time** manual sweep, not a scheduled job.
 
 > **Platform note.** Reuses the OS-appropriate extractors and writers from earlier prompts.
 > On **Windows** the email/calendar pull is via Outlook COM and there is **no iMessage
 > source** — sweep email + calendar + WhatsApp only.
+
+> Consider sweeping **meetings** too (Prompt 10's extractor over a 14-day window) so any
+> action items spoken in the last two weeks of calls get reconciled and captured as well.
 
 ## Context
 

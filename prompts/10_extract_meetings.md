@@ -66,7 +66,7 @@ Emit a JSON array to `state/meetings.json`, one record per meeting:
 {
   "source": "fireflies | otter | email | folder",
   "id": "stable-unique-id",
-  "title": "Voxy weekly sync",
+  "title": "Acme weekly sync",
   "datetime": "2026-06-12T15:00:00+01:00",
   "duration_min": 47,
   "attendees": [{ "name": "Jane Doe", "email": "jane@acme.com" }],
